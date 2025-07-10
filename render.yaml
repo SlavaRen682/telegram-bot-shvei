@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: shveibot
+    env: python
+    buildCommand: ""
+    startCommand: python ShveiBot.py
+    autoDeploy: true
+    envVars:
+      - key: TOKEN
+        sync: false
