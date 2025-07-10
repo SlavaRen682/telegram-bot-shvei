@@ -1,6 +1,9 @@
 import telebot
 from telebot import types
 import os
+from flask import Flask
+import threading
+
 
 TOKEN = os.environ.get("TOKEN")
 if not TOKEN:
@@ -31,5 +34,19 @@ def start(message):
         reply_markup=markup,
         disable_web_page_preview=True
     )
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return 'Bot is running!'
+
+def run_flask():
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
+
+if __name__ == '__main__':
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.start()
+    bot.polling(none_stop=True)
 
 bot.polling()
