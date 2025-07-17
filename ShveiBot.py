@@ -3,17 +3,19 @@ from telebot import types
 from flask import Flask, request
 import os
 
-# Получаем токен из переменной окружения
+# Получение токена и URL вебхука
 TOKEN = os.environ.get("TOKEN")
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+
 if not TOKEN:
     raise ValueError("❌ Переменная окружения TOKEN не установлена!")
+if not WEBHOOK_URL:
+    raise ValueError("❌ Переменная окружения WEBHOOK_URL не установлена!")
 
 bot = telebot.TeleBot(TOKEN, threaded=False)
 app = Flask(__name__)
 
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # Пример: https://shveibot.onrender.com
-
-# Обработка команды /start
+# Команда /start
 @bot.message_handler(commands=['start'])
 def start(message):
     text = (
@@ -37,28 +39,23 @@ def start(message):
         disable_web_page_preview=True
     )
 
-# Корневой маршрут
+# Корневая проверка
 @app.route("/", methods=["GET"])
 def index():
     return "🤖 ShveiBot is running!"
 
-# Вебхук Telegram
+# Обработка webhook'а
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
+    json_string = request.get_data().decode("utf-8")
+    update = telebot.types.Update.de_json(json_string)
     bot.process_new_updates([update])
     return "OK", 200
 
-# Устанавливаем webhook при запуске
+# Установка webhook при запуске
 if __name__ == "__main__":
-    if not WEBHOOK_URL:
-        raise ValueError("❌ Переменная окружения WEBHOOK_URL не установлена!")
-
-    # Удаляем предыдущий webhook
     bot.remove_webhook()
-    
-    # Устанавливаем новый webhook
     bot.set_webhook(url=f"{WEBHOOK_URL}/{TOKEN}")
-
+    
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
